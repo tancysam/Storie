@@ -2,13 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  min-height: 100vh;
-}
-
+/* Retro Theme Base Styles */
 @layer base {
   html {
-    font-family: system-ui, sans-serif;
+    font-family: 'Times New Roman', Georgia, serif;
+    background-color: #f4f1e8;
+  }
+  
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: #f4f1e8;
+    background-image: 
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 24px,
+        rgba(139, 115, 85, 0.03) 24px,
+        rgba(139, 115, 85, 0.03) 25px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 24px,
+        rgba(139, 115, 85, 0.03) 24px,
+        rgba(139, 115, 85, 0.03) 25px
+      );
+  }
+  
+  ::selection {
+    background-color: #c9a227;
+    color: #4a3728;
+  }
+}
+
+/* Retro Component Styles */
+@layer components {
+  .retro-card {
+    @apply bg-retro-paper border-3 border-retro-dark shadow-retro;
+  }
+  
+  .retro-btn {
+    @apply font-display tracking-wide border-3 border-retro-dark shadow-retro-sm 
+           hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-retro-sm
+           active:translate-x-1 active:translate-y-1 active:shadow-none
+           transition-all duration-100;
+  }
+  
+  .retro-btn-primary {
+    @apply bg-retro-rust text-retro-cream hover:bg-retro-dark;
+  }
+  
+  .retro-btn-secondary {
+    @apply bg-retro-sepia text-retro-dark hover:bg-retro-brown hover:text-retro-cream;
+  }
+  
+  .retro-btn-danger {
+    @apply bg-retro-red text-retro-cream hover:bg-retro-dark;
+  }
+  
+  .retro-btn-ghost {
+    @apply bg-transparent text-retro-dark border-transparent shadow-none
+           hover:bg-retro-sepia hover:border-retro-brown hover:shadow-retro-sm;
+  }
+  
+  .retro-input {
+    @apply bg-retro-cream border-3 border-retro-brown text-retro-dark
+           placeholder-retro-brown/60 font-retro
+           focus:border-retro-rust focus:outline-none shadow-retro-inset;
+  }
+  
+  .retro-title {
+    @apply font-display text-retro-dark tracking-wide;
+  }
+  
+  .retro-label {
+    @apply font-retro text-sm uppercase tracking-widest text-retro-brown;
+  }
+}
+
+/* Vintage Text Effect */
+@layer utilities {
+  .text-vintage {
+    text-shadow: 1px 1px 0px rgba(139, 115, 85, 0.3);
+  }
+  
+  .paper-texture {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    background-blend-mode: multiply;
   }
 }

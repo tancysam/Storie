@@ -48,12 +48,12 @@ export default function CreateStoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-retro-cream">
+      <header className="bg-retro-paper border-b-3 border-retro-dark">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-3xl">📚</span>
-            <h1 className="text-xl font-bold text-gray-900">Storie</h1>
+          <Link to="/" className="flex items-center gap-3">
+            <span className="text-4xl font-display">✦</span>
+            <h1 className="text-2xl font-display font-bold text-retro-dark tracking-wide">Storie</h1>
           </Link>
           <Link to="/">
             <Button variant="ghost">Back to Library</Button>

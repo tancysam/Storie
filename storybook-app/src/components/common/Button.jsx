@@ -7,13 +7,13 @@ export default function Button({
   className = '',
   type = 'button',
 }) {
-  const baseStyles = 'font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+  const baseStyles = 'font-display tracking-wide border-3 border-retro-dark transition-all duration-100';
   
   const variants = {
-    primary: 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500 disabled:bg-emerald-300',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500 disabled:bg-gray-100',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 disabled:bg-red-300',
-    ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+    primary: 'bg-retro-rust text-retro-cream hover:bg-retro-dark shadow-retro-sm hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:bg-retro-sepia disabled:text-retro-brown',
+    secondary: 'bg-retro-sepia text-retro-dark hover:bg-retro-brown hover:text-retro-cream shadow-retro-sm hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:bg-retro-paper disabled:text-retro-brown',
+    danger: 'bg-retro-red text-retro-cream hover:bg-retro-dark shadow-retro-sm hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:bg-retro-sepia disabled:text-retro-brown',
+    ghost: 'bg-transparent text-retro-dark border-transparent shadow-none hover:bg-retro-sepia hover:border-retro-brown hover:shadow-retro-sm',
   };
 
   const sizes = {

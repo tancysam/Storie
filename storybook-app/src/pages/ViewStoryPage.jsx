@@ -26,7 +26,7 @@ export default function ViewStoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-emerald-950 flex items-center justify-center">
+      <div className="min-h-screen bg-retro-dark flex items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -34,9 +34,9 @@ export default function ViewStoryPage() {
 
   if (!storybook || !pages.length) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Storybook not found</h2>
+      <div className="min-h-screen bg-retro-cream flex items-center justify-center">
+        <div className="text-center bg-retro-paper border-3 border-retro-dark shadow-retro p-8">
+          <h2 className="text-2xl font-display font-bold text-retro-dark mb-4">Storybook not found</h2>
           <Link to="/">
             <Button>Back to Library</Button>
           </Link>

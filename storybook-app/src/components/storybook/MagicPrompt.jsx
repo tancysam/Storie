@@ -29,13 +29,13 @@ export default function MagicPrompt({ onSubmit, isGenerating }) {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Create Your Storybook</h1>
-        <p className="text-gray-600">Enter a story idea and we'll create a magical bedtime story</p>
+        <h1 className="text-4xl font-display font-bold text-retro-dark mb-2">Create Your Storybook</h1>
+        <p className="text-retro-brown font-retro">Enter a story idea and we'll create a magical bedtime story</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 bg-retro-paper border-3 border-retro-dark shadow-retro p-8">
         <div>
-          <label htmlFor="childName" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="childName" className="block text-sm font-retro uppercase tracking-widest text-retro-brown mb-2">
             Child's Name
           </label>
           <input
@@ -45,12 +45,12 @@ export default function MagicPrompt({ onSubmit, isGenerating }) {
             onChange={(e) => setChildName(e.target.value)}
             placeholder="e.g., Emma"
             disabled={isGenerating}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-gray-100"
+            className="w-full px-4 py-3 bg-retro-cream border-3 border-retro-brown text-retro-dark placeholder-retro-brown/60 font-retro focus:border-retro-rust focus:outline-none disabled:bg-retro-sepia"
           />
         </div>
 
         <div>
-          <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="prompt" className="block text-sm font-retro uppercase tracking-widest text-retro-brown mb-2">
             Story Idea
           </label>
           <textarea
@@ -60,12 +60,12 @@ export default function MagicPrompt({ onSubmit, isGenerating }) {
             placeholder="e.g., A brave little toaster gets lost in the forest but makes friends with a squirrel"
             rows={4}
             disabled={isGenerating}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-gray-100 resize-none"
+            className="w-full px-4 py-3 bg-retro-cream border-3 border-retro-brown text-retro-dark placeholder-retro-brown/60 font-retro focus:border-retro-rust focus:outline-none disabled:bg-retro-sepia resize-none"
           />
         </div>
 
         <div>
-          <label htmlFor="style" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="style" className="block text-sm font-retro uppercase tracking-widest text-retro-brown mb-2">
             Visual Style
           </label>
           <select
@@ -73,7 +73,7 @@ export default function MagicPrompt({ onSubmit, isGenerating }) {
             value={visualStyle}
             onChange={(e) => setVisualStyle(e.target.value)}
             disabled={isGenerating}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-gray-100"
+            className="w-full px-4 py-3 bg-retro-cream border-3 border-retro-brown text-retro-dark font-retro focus:border-retro-rust focus:outline-none disabled:bg-retro-sepia"
           >
             {VISUAL_STYLES.map((style) => (
               <option key={style.value} value={style.value}>

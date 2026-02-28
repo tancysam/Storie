@@ -1,4 +1,4 @@
-import { ACT_TITLES, SAFETY_PROMPT_PREFIX } from './constants';
+import { ACT_TITLES, SAFETY_PROMPT_PREFIX, NO_TEXT_INSTRUCTION } from './constants';
 import insforge from '../lib/insforgeClient';
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
@@ -36,7 +36,7 @@ Output ONLY valid JSON with this exact structure:
     {
       "actNumber": 1,
       "actTitle": "Introduction",
-      "sceneDescription": "Brief visual scene description for image generation. Important: Explicitly include in your description that the image MUST NOT HAVE ANY WORDS.",
+      "sceneDescription": "Brief visual scene description for image generation. CRITICAL: Describe ONLY visual elements like characters, colors, objects, setting, mood, and composition. NEVER mention text, words, letters, titles, speech bubbles, or anything readable. The image must be purely visual artwork.",
       "textContent": "The story text for this page (50-80 words, simple language, gentle rhythm)"
     },
     ... (4 acts total)
@@ -87,6 +87,57 @@ export async function generateActText(prompt, childName, actTitle, actNumber) {
   }
 }
 
+export async function regenerateImageWithFeedback(originalPrompt, visualStyle, feedback) {
+  const enhancedPrompt = `${SAFETY_PROMPT_PREFIX}, ${visualStyle} style, ${originalPrompt}. ${NO_TEXT_INSTRUCTION} User feedback for improvement: ${feedback}`;
+
+  try {
+    const result = await wavespeedGenerate(enhancedPrompt);
+    const base64Image = result.data.outputs[0];
+
+    if (!base64Image) {
+      throw new Error('No image generated');
+    }
+
+    const raw = base64Image.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
+    const blob = new Blob([buffer], { type: 'image/png' });
+
+    const { data: uploadData, error: uploadError } = await insforge.storage
+      .from('story-images')
+      .uploadAuto(blob);
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw new Error('Failed to upload image');
+    }
+
+    return uploadData.url;
+  } catch (error) {
+    console.error('Error regenerating image:', error);
+    throw new Error('Failed to regenerate image');
+  }
+}
+
+export async function regenerateTextWithFeedback(originalPrompt, childName, actTitle, actNumber, currentText, feedback) {
+  try {
+    const completion = await openaiChat([
+      {
+        role: 'system',
+        content: `You are a children's storybook writer. Rewrite the following paragraph for act ${actNumber} (${actTitle}) of a bedtime story for ${childName}. Use simple, warm language with gentle rhythm. Apply the user's feedback to improve it. Do not include act titles or labels.`,
+      },
+      {
+        role: 'user',
+        content: `Story premise: ${originalPrompt}\n\nCurrent text: ${currentText}\n\nUser feedback: ${feedback}\n\nRewrite the text addressing the feedback.`,
+      },
+    ]);
+
+    return completion.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('Error regenerating text:', error);
+    throw new Error('Failed to regenerate text');
+  }
+}
+
 async function wavespeedGenerate(prompt) {
   const maxRetries = 3;
 
@@ -125,7 +176,7 @@ async function wavespeedGenerate(prompt) {
 }
 
 export async function generateImage(sceneDescription, visualStyle) {
-  const prompt = `${SAFETY_PROMPT_PREFIX}, ${visualStyle} style, ${sceneDescription}`;
+  const prompt = `${SAFETY_PROMPT_PREFIX}, ${visualStyle} style, ${sceneDescription}. ${NO_TEXT_INSTRUCTION}`;
 
   try {
     const result = await wavespeedGenerate(prompt);

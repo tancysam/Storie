@@ -51,7 +51,7 @@ export default function EditStoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-retro-cream flex items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -59,9 +59,9 @@ export default function EditStoryPage() {
 
   if (!storybook) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Storybook not found</h2>
+      <div className="min-h-screen bg-retro-cream flex items-center justify-center">
+        <div className="text-center bg-retro-paper border-3 border-retro-dark shadow-retro p-8">
+          <h2 className="text-2xl font-display font-bold text-retro-dark mb-4">Storybook not found</h2>
           <Link to="/">
             <Button>Back to Library</Button>
           </Link>
@@ -71,12 +71,12 @@ export default function EditStoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-retro-cream">
+      <header className="bg-retro-paper border-b-3 border-retro-dark">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-3xl">📚</span>
-            <h1 className="text-xl font-bold text-gray-900">Storie</h1>
+          <Link to="/" className="flex items-center gap-3">
+            <span className="text-4xl font-display">✦</span>
+            <h1 className="text-2xl font-display font-bold text-retro-dark tracking-wide">Storie</h1>
           </Link>
           <Link to="/">
             <Button variant="ghost">Back to Library</Button>
@@ -86,21 +86,21 @@ export default function EditStoryPage() {
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         {storybook.status === 'generating' ? (
-          <div className="text-center py-12">
+          <div className="text-center py-12 bg-retro-paper border-3 border-retro-dark shadow-retro">
             <LoadingSpinner size="lg" />
-            <h2 className="text-2xl font-bold text-gray-900 mt-6 mb-2">Creating Your Story...</h2>
-            <p className="text-gray-600 mb-4">This may take a minute or two</p>
-            <div className="flex justify-center gap-2">
+            <h2 className="text-2xl font-display font-bold text-retro-dark mt-6 mb-2">Creating Your Story...</h2>
+            <p className="text-retro-brown font-retro mb-4">This may take a minute or two</p>
+            <div className="flex justify-center gap-3">
               {[1, 2, 3, 4].map((num) => (
                 <div
                   key={num}
-                  className={`w-3 h-3 rounded-full ${
-                    pages.length >= num ? 'bg-emerald-600' : 'bg-gray-300'
+                  className={`w-4 h-4 border-2 border-retro-dark ${
+                    pages.length >= num ? 'bg-retro-rust' : 'bg-retro-sepia'
                   }`}
                 />
               ))}
             </div>
-            <p className="text-sm text-gray-500 mt-2">{pages.length}/4 pages generated</p>
+            <p className="text-sm text-retro-brown font-retro mt-2">{pages.length}/4 pages generated</p>
           </div>
         ) : (
           <DirectorsCut

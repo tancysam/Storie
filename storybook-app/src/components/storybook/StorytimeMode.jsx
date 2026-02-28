@@ -45,22 +45,22 @@ export default function StorytimeMode({ storybook, pages }) {
   return (
     <div 
       {...handlers}
-      className="min-h-screen bg-gradient-to-b from-emerald-950 to-emerald-900 relative overflow-hidden"
+      className="min-h-screen bg-retro-dark relative overflow-hidden"
     >
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-20 bg-gradient-to-b from-black/50 to-transparent">
-        <div className="text-white">
-          <h1 className="text-xl font-bold">{storybook.title}</h1>
-          <p className="text-sm opacity-80">for {storybook.child_name}</p>
+      <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-20 bg-gradient-to-b from-retro-dark/90 to-transparent">
+        <div className="text-retro-cream">
+          <h1 className="text-xl font-display font-bold">{storybook.title}</h1>
+          <p className="text-sm font-retro text-retro-sepia">for {storybook.child_name}</p>
         </div>
-        <Button variant="ghost" onClick={toggleFullscreen} className="text-white">
+        <Button variant="ghost" onClick={toggleFullscreen} className="text-retro-cream border-retro-cream">
           {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
         </Button>
       </div>
 
       {/* Main Story View */}
       <div className="relative min-h-screen flex items-center justify-center p-4 pt-20 pb-24">
-        <div className="relative w-full max-w-4xl aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
+        <div className="relative w-full max-w-4xl aspect-[4/3] border-3 border-retro-dark shadow-retro-lg overflow-hidden">
           {/* Background Image */}
           <img
             src={currentPageData.image_url}
@@ -69,12 +69,12 @@ export default function StorytimeMode({ storybook, pages }) {
           />
           
           {/* Text Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-            <span className="text-amber-300 text-sm font-semibold uppercase tracking-wide mb-2 block">
+          <div className="absolute inset-0 bg-gradient-to-t from-retro-dark/90 via-transparent to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 bg-retro-paper/95 border-t-3 border-retro-dark">
+            <span className="text-retro-gold text-sm font-retro font-semibold uppercase tracking-widest mb-2 block">
               {currentPageData.act_title}
             </span>
-            <p className="text-white text-lg md:text-xl lg:text-2xl leading-relaxed font-storybook">
+            <p className="text-retro-dark text-lg md:text-xl lg:text-2xl leading-relaxed font-storybook">
               {currentPageData.text_content}
             </p>
           </div>
@@ -85,7 +85,7 @@ export default function StorytimeMode({ storybook, pages }) {
       {currentPage > 0 && (
         <button
           onClick={() => setCurrentPage(prev => prev - 1)}
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-colors z-10"
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-retro-paper border-3 border-retro-dark text-retro-dark p-3 hover:bg-retro-sepia transition-colors z-10"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -95,7 +95,7 @@ export default function StorytimeMode({ storybook, pages }) {
       {currentPage < sortedPages.length - 1 && (
         <button
           onClick={() => setCurrentPage(prev => prev + 1)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-colors z-10"
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-retro-paper border-3 border-retro-dark text-retro-dark p-3 hover:bg-retro-sepia transition-colors z-10"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -104,22 +104,22 @@ export default function StorytimeMode({ storybook, pages }) {
       )}
 
       {/* Page Indicators */}
-      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-3 z-10">
         {sortedPages.map((_, index) => (
           <button
             key={index}
             onClick={() => goToPage(index)}
-            className={`w-3 h-3 rounded-full transition-colors ${
+            className={`w-4 h-4 border-2 border-retro-cream transition-colors ${
               index === currentPage 
-                ? 'bg-white' 
-                : 'bg-white/40 hover:bg-white/60'
+                ? 'bg-retro-rust border-retro-rust' 
+                : 'bg-transparent hover:bg-retro-sepia'
             }`}
           />
         ))}
       </div>
 
       {/* Swipe Hint */}
-      <div className="absolute bottom-12 left-0 right-0 text-center text-white/60 text-sm">
+      <div className="absolute bottom-12 left-0 right-0 text-center text-retro-cream/60 text-sm font-retro">
         Swipe or use arrows to navigate
       </div>
     </div>
