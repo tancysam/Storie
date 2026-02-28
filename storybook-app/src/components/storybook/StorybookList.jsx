@@ -28,8 +28,16 @@ export default function StorybookList({ storybooks, loading, onDelete }) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {storybooks.map((book) => (
         <div key={book.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-          <div className="h-40 bg-gradient-to-br from-emerald-500 to-amber-500 flex items-center justify-center">
-            <span className="text-6xl">📖</span>
+          <div className="h-40 bg-gradient-to-br from-emerald-500 to-amber-500 flex items-center justify-center relative">
+            {book.preview_image_url ? (
+              <img 
+                src={book.preview_image_url} 
+                alt={book.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-6xl">📖</span>
+            )}
           </div>
           <div className="p-4">
             <h3 className="font-bold text-lg text-gray-900 mb-1">{book.title}</h3>
@@ -57,11 +65,27 @@ export default function StorybookList({ storybooks, loading, onDelete }) {
                   <Link to={`/edit/${book.id}`} className="flex-1">
                     <Button variant="secondary" size="sm" className="w-full">Edit</Button>
                   </Link>
+                  <Button 
+                    variant="danger" 
+                    size="sm"
+                    onClick={() => onDelete(book.id)}
+                  >
+                    Delete
+                  </Button>
                 </>
               ) : book.status === 'generating' ? (
-                <Link to={`/edit/${book.id}`} className="flex-1">
-                  <Button variant="secondary" size="sm" className="w-full">View Progress</Button>
-                </Link>
+                <>
+                  <Link to={`/edit/${book.id}`} className="flex-1">
+                    <Button variant="secondary" size="sm" className="w-full">View Progress</Button>
+                  </Link>
+                  <Button 
+                    variant="danger" 
+                    size="sm"
+                    onClick={() => onDelete(book.id)}
+                  >
+                    Delete
+                  </Button>
+                </>
               ) : (
                 <Button 
                   variant="danger" 

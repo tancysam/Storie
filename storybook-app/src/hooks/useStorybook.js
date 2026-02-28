@@ -46,14 +46,32 @@ export function useStorybook() {
     setLoading(true);
     setError(null);
 
+    // Fetch storybooks with their pages to get first image
     const { data, error: err } = await insforge.database
       .from('storybooks')
-      .select('*')
+      .select(`*
+        , story_pages(
+          image_url,
+          page_number
+        )
+      `)
       .order('created_at', { ascending: false });
 
     setLoading(false);
     if (err) setError(err.message);
-    return { data, error: err };
+    
+    // Process data to include first image URL
+    const processedData = data?.map(book => {
+      const pages = book.story_pages || [];
+      const firstPage = pages.find(p => p.page_number === 1) || pages[0];
+      return {
+        ...book,
+        preview_image_url: firstPage?.image_url || null,
+        story_pages: undefined // Remove pages from response to keep it clean
+      };
+    }) || [];
+    
+    return { data: processedData, error: err };
   }, []);
 
   const updateStorybookStatus = useCallback(async (id, status) => {
