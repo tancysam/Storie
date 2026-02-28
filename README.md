@@ -129,7 +129,7 @@ Used for generating illustrations with safety prompts to ensure child-appropriat
 Provides:
 - PostgreSQL database for story storage
 - File storage for generated images
-- Optional authentication (currently disabled)
+- Authentication
 
 ## Development
 
