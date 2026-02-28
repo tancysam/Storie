@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "mcp__insforge__run-raw-sql",
+      "WebSearch",
+      "WebFetch(domain:wavespeed.ai)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "insforge"
+  ]
+}
