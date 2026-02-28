@@ -21,26 +21,40 @@ export function useGeneration() {
         childName,
         visualStyle,
         {
-          onProgress: setProgress,
+          onProgress: (msg) => {
+            setProgress(msg);
+            console.log('Progress:', msg);
+          },
           onPageComplete: (page) => {
-            setProgress(`Page ${page.page_number} complete!`);
+            setProgress(`Page ${page.page_number} of 4 complete!`);
           },
           onError: (err) => {
             console.error('Generation error:', err);
+            setError(err);
           },
         }
       );
 
       // Save pages to database
       setProgress('Saving your storybook...');
-      await createStoryPages(result.pages);
+      const { error: saveError } = await createStoryPages(result.pages);
+      
+      if (saveError) {
+        console.error('Failed to save pages:', saveError);
+        throw new Error(`Failed to save pages: ${saveError.message || JSON.stringify(saveError)}`);
+      }
 
       // Update storybook status
-      await updateStorybookStatus(storybookId, 'ready');
+      const { error: statusError } = await updateStorybookStatus(storybookId, 'ready');
+      
+      if (statusError) {
+        console.error('Failed to update status:', statusError);
+      }
 
       setProgress('Complete!');
       return { success: true, data: result };
     } catch (err) {
+      console.error('Story generation failed:', err);
       setError(err.message);
       await updateStorybookStatus(storybookId, 'error');
       return { success: false, error: err.message };
