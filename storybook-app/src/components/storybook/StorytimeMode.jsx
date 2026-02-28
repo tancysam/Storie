@@ -92,19 +92,19 @@ export default function StorytimeMode({ storybook, pages }) {
             )}
           </div>
 
-          {/* Text Section - Right side, white box */}
-          <div className="w-[40%] flex flex-col bg-retro-paper border-l-3 border-retro-dark">
+          {/* Text Section - Right side, translucent box */}
+          <div className="w-[40%] flex flex-col bg-retro-paper/75 border-l-3 border-retro-dark/50">
             <div className="flex-1 p-6 overflow-y-auto flex flex-col">
               <span className="text-retro-gold text-sm font-retro font-semibold uppercase tracking-widest mb-4 block">
                 {currentPageData.act_title}
               </span>
-              <p className="text-retro-dark text-lg md:text-xl leading-relaxed font-storybook flex-1">
+              <p className="text-retro-dark text-lg md:text-xl leading-relaxed font-storybook flex-1 text-shadow-sm">
                 {currentPageData.text_content}
               </p>
             </div>
             
             {/* Page Indicators - at bottom of text area */}
-            <div className="p-4 border-t-3 border-retro-dark flex justify-center gap-3">
+            <div className="p-4 border-t-3 border-retro-dark/50 flex justify-center gap-3">
               {sortedPages.map((_, index) => (
                 <button
                   key={index}
