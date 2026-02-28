@@ -70,20 +70,25 @@ export function AuthProvider({ children }) {
   }, []);
 
   const verifyEmail = useCallback(async (email, code) => {
-    const { data, error } = await insforge.auth.verifyEmail({
-      email,
-      code,
-    });
+    try {
+      const { data, error } = await insforge.auth.verifyEmail({
+        email,
+        code,
+      });
 
-    if (error) {
-      return { error };
+      if (error) {
+        return { error };
+      }
+
+      if (data?.user) {
+        setUser(data.user);
+      }
+
+      return { data, error: null };
+    } catch (err) {
+      console.error('verifyEmail error:', err);
+      return { error: { message: err.message || 'Verification failed' } };
     }
-
-    if (data?.user) {
-      setUser(data.user);
-    }
-
-    return { data, error: null };
   }, []);
 
   const resendVerificationEmail = useCallback(async (email) => {

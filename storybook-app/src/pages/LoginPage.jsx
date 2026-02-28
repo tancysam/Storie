@@ -71,7 +71,7 @@ export default function LoginPage() {
       try {
         const { error: verifyError } = await verifyEmail(email, verificationCode);
         if (verifyError) {
-          setError(verifyError.message || 'Invalid verification code');
+          setError(verifyError.message || 'Invalid verification code. If your backend uses link verification, please check your email for a verification link.');
         } else {
           navigate('/');
         }
@@ -90,7 +90,7 @@ export default function LoginPage() {
           setError(resendError.message || 'Failed to resend code');
         } else if (data?.success) {
           setError('');
-          alert('Verification code sent!');
+          alert('Verification email sent!');
         }
       } catch (err) {
         setError('Failed to resend code');
@@ -104,14 +104,20 @@ export default function LoginPage() {
         <div className="bg-retro-paper border-3 border-retro-dark p-8 max-w-md w-full text-center">
           <span className="text-4xl mb-4 block">✉️</span>
           <h2 className="text-2xl font-display font-bold text-retro-dark mb-4">Verify Your Email</h2>
-          <p className="text-retro-brown mb-6">
-            We've sent a 6-digit code to <strong>{email}</strong>. Enter it below to verify your account.
+          <p className="text-retro-brown mb-4">
+            We've sent a verification email to <strong>{email}</strong>.
+          </p>
+          <p className="text-retro-brown mb-6 text-sm">
+            If your account uses code verification, enter the 6-digit code below. If it uses link verification, click the link in your email.
           </p>
 
           <ErrorMessage message={error} onDismiss={() => setError('')} />
 
           <form onSubmit={handleVerifyCode} className="space-y-4">
             <div>
+              <label className="block text-sm font-display text-retro-dark mb-1">
+                Verification Code (if applicable)
+              </label>
               <input
                 type="text"
                 value={verificationCode}
@@ -134,7 +140,7 @@ export default function LoginPage() {
                   Verifying...
                 </span>
               ) : (
-                'Verify'
+                'Verify Code'
               )}
             </Button>
           </form>
@@ -146,7 +152,7 @@ export default function LoginPage() {
               disabled={resending}
               className="text-retro-rust font-display hover:underline disabled:text-retro-brown disabled:cursor-not-allowed"
             >
-              {resending ? 'Sending...' : "Didn't receive a code? Resend"}
+              {resending ? 'Sending...' : "Didn't receive an email? Resend"}
             </button>
           </div>
 
@@ -155,6 +161,7 @@ export default function LoginPage() {
               setVerificationRequired(false);
               setVerificationCode('');
               setError('');
+              setIsLogin(true); // Switch to login mode
             }} variant="secondary" className="w-full">
               Back to Login
             </Button>
