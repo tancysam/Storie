@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { useStorybook } from '../hooks/useStorybook';
 import StorybookList from '../components/storybook/StorybookList';
 import Button from '../components/common/Button';
 
 export default function HomePage() {
+  const { user, signOut } = useAuth();
   const { getUserStorybooks, deleteStorybook } = useStorybook();
   const [storybooks, setStorybooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadStorybooks = async () => {
@@ -25,6 +28,11 @@ export default function HomePage() {
     }
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-retro-cream">
       <header className="bg-retro-paper border-b-3 border-retro-dark">
@@ -32,6 +40,14 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <span className="text-4xl font-display">✦</span>
             <h1 className="text-2xl font-display font-bold text-retro-dark tracking-wide">Storie</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-retro-brown font-retro hidden sm:inline">
+              {user?.profile?.name || user?.email}
+            </span>
+            <Button variant="secondary" size="sm" onClick={handleLogout}>
+              Logout
+            </Button>
           </div>
         </div>
       </header>
