@@ -143,7 +143,7 @@ async function wavespeedGenerate(prompt) {
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const res = await fetch(
-      'https://api.wavespeed.ai/api/v3/wavespeed-ai/z-image/turbo',
+      'https://api.wavespeed.ai/api/v3/google/nano-banana-2/text-to-image',
       {
         method: 'POST',
         headers: {
