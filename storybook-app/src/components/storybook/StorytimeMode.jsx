@@ -53,7 +53,11 @@ export default function StorytimeMode({ storybook, pages }) {
           <h1 className="text-xl font-display font-bold truncate">{storybook.title}</h1>
           <p className={`text-sm font-retro ${isFullscreen ? 'text-retro-brown' : 'text-retro-sepia'}`}>for {storybook.child_name}</p>
         </div>
-        <Button variant="ghost" onClick={toggleFullscreen} className={`${isFullscreen ? 'text-retro-dark border-retro-dark' : 'text-retro-cream border-retro-cream'}`}>
+        <Button 
+          variant="secondary" 
+          onClick={toggleFullscreen} 
+          className={`${isFullscreen ? 'bg-retro-rust text-retro-cream border-retro-dark hover:bg-retro-dark' : 'bg-retro-paper text-retro-dark hover:bg-retro-sepia'}`}
+        >
           {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
         </Button>
       </div>
@@ -92,19 +96,19 @@ export default function StorytimeMode({ storybook, pages }) {
             )}
           </div>
 
-          {/* Text Section - Right side, translucent box */}
-          <div className="w-[40%] flex flex-col bg-retro-paper/75 border-l-3 border-retro-dark/50">
+          {/* Text Section - Right side, solid box */}
+          <div className="w-[40%] flex flex-col bg-retro-paper border-l-3 border-retro-dark">
             <div className="flex-1 p-6 overflow-y-auto flex flex-col">
               <span className="text-retro-gold text-sm font-retro font-semibold uppercase tracking-widest mb-4 block">
                 {currentPageData.act_title}
               </span>
-              <p className="text-retro-dark text-lg md:text-xl leading-relaxed font-storybook flex-1 text-shadow-sm">
+              <p className="text-retro-dark text-lg md:text-xl leading-relaxed font-storybook flex-1">
                 {currentPageData.text_content}
               </p>
             </div>
             
             {/* Page Indicators - at bottom of text area */}
-            <div className="p-4 border-t-3 border-retro-dark/50 flex justify-center gap-3">
+            <div className="p-4 border-t-3 border-retro-dark flex justify-center gap-3">
               {sortedPages.map((_, index) => (
                 <button
                   key={index}
@@ -120,26 +124,25 @@ export default function StorytimeMode({ storybook, pages }) {
           </div>
         </div>
       ) : (
-        // Normal layout: overlay style
-        <div className="relative min-h-screen flex items-center justify-center p-4 pt-20 pb-24">
-          <div className="relative w-full max-w-4xl aspect-[4/3] border-3 border-retro-dark shadow-retro-lg overflow-hidden">
-            {/* Background Image */}
+        // Normal layout: image above, text below - separated
+        <div className="flex flex-col items-center justify-center p-4 pt-20 pb-24 min-h-screen">
+          {/* Image Section */}
+          <div className="w-full max-w-4xl border-3 border-retro-dark shadow-retro-lg overflow-hidden bg-retro-dark">
             <img
               src={currentPageData.image_url}
               alt={`Page ${currentPage + 1}`}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="w-full h-auto object-contain"
             />
-            
-            {/* Text Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-retro-dark/90 via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 bg-retro-paper/95 border-t-3 border-retro-dark">
-              <span className="text-retro-gold text-sm font-retro font-semibold uppercase tracking-widest mb-2 block">
-                {currentPageData.act_title}
-              </span>
-              <p className="text-retro-dark text-lg md:text-xl lg:text-2xl leading-relaxed font-storybook">
-                {currentPageData.text_content}
-              </p>
-            </div>
+          </div>
+          
+          {/* Text Section - Below image, not overlapping */}
+          <div className="w-full max-w-4xl bg-retro-paper/95 border-3 border-t-0 border-retro-dark p-6 md:p-8">
+            <span className="text-retro-gold text-sm font-retro font-semibold uppercase tracking-widest mb-2 block">
+              {currentPageData.act_title}
+            </span>
+            <p className="text-retro-dark text-lg md:text-xl lg:text-2xl leading-relaxed font-storybook">
+              {currentPageData.text_content}
+            </p>
           </div>
         </div>
       )}
