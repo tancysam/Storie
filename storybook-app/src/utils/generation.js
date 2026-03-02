@@ -1,39 +1,32 @@
 import { ACT_TITLES, SAFETY_PROMPT_PREFIX, NO_TEXT_INSTRUCTION } from './constants';
 import insforge from '../lib/insforgeClient';
 
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const WAVESPEED_API_KEY = import.meta.env.VITE_WAVESPEED_API_KEY;
 
-// Validate API keys on load
-if (!WAVESPEED_API_KEY) {
-  console.warn('Missing VITE_WAVESPEED_API_KEY environment variable - image generation may fail');
-}
-
-// Use InsForge serverless function as OpenAI proxy to avoid CORS
 async function openaiChat(messages, temperature = 0.7) {
-  const { data, error } = await insforge.functions.invoke('openai-proxy', {
-    body: {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
       model: 'gpt-4o-mini',
       messages,
       temperature,
-    }
+    }),
   });
 
-  if (error) {
-    throw new Error(`OpenAI proxy error: ${error.message || JSON.stringify(error)}`);
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`OpenAI API error: ${res.status} ${err}`);
   }
 
-  if (!data || data.error) {
-    throw new Error(data?.error || 'Unknown error from OpenAI proxy');
-  }
-
-  return data;
+  return res.json();
 }
 
 export async function generateStoryStructure(prompt, childName) {
-  if (!OPENAI_API_KEY) {
-    throw new Error('OpenAI API key not configured. Please set VITE_OPENAI_API_KEY in .env.local');
-  }
-
   const systemPrompt = `You are a children's storybook writer. Create a 4-act story structure based on the given idea. The story is for a toddler named ${childName}.
 
 Output ONLY valid JSON with this exact structure:
