@@ -1,37 +1,32 @@
 import { ACT_TITLES, SAFETY_PROMPT_PREFIX, NO_TEXT_INSTRUCTION } from './constants';
 import insforge from '../lib/insforgeClient';
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const WAVESPEED_API_KEY = import.meta.env.VITE_WAVESPEED_API_KEY;
 
 // Validate API keys on load
-if (!OPENAI_API_KEY) {
-  console.error('Missing VITE_OPENAI_API_KEY environment variable');
-}
 if (!WAVESPEED_API_KEY) {
-  console.error('Missing VITE_WAVESPEED_API_KEY environment variable');
+  console.warn('Missing VITE_WAVESPEED_API_KEY environment variable - image generation may fail');
 }
 
+// Use InsForge serverless function as OpenAI proxy to avoid CORS
 async function openaiChat(messages, temperature = 0.7) {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
+  const { data, error } = await insforge.functions.invoke('openai-proxy', {
+    body: {
       model: 'gpt-4o-mini',
       messages,
       temperature,
-    }),
+    }
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`OpenAI API error: ${res.status} ${err}`);
+  if (error) {
+    throw new Error(`OpenAI proxy error: ${error.message || JSON.stringify(error)}`);
   }
 
-  return res.json();
+  if (!data || data.error) {
+    throw new Error(data?.error || 'Unknown error from OpenAI proxy');
+  }
+
+  return data;
 }
 
 export async function generateStoryStructure(prompt, childName) {
