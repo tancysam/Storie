@@ -1,29 +1,37 @@
 import { ACT_TITLES, SAFETY_PROMPT_PREFIX, NO_TEXT_INSTRUCTION } from './constants';
 import insforge from '../lib/insforgeClient';
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-const WAVESPEED_API_KEY = import.meta.env.VITE_WAVESPEED_API_KEY;
-
 async function openaiChat(messages, temperature = 0.7) {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages,
-      temperature,
-    }),
+  const { data, error } = await insforge.functions.invoke('openai-chat', {
+    body: { messages, temperature },
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`OpenAI API error: ${res.status} ${err}`);
-  }
+  if (error) throw new Error(`OpenAI function error: ${error.message}`);
+  return data;
+}
 
-  return res.json();
+async function wavespeedGenerate(prompt) {
+  const maxRetries = 3;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const { data, error } = await insforge.functions.invoke('wavespeed-image', {
+      body: { prompt },
+    });
+
+    if (error) {
+      console.error(`Wavespeed attempt ${attempt + 1} failed:`, error);
+      if (attempt === maxRetries - 1) throw new Error(`Wavespeed function error: ${error.message}`);
+      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      continue;
+    }
+
+    if (!data?.data?.outputs || !Array.isArray(data.data.outputs)) {
+      console.error('Invalid Wavespeed response structure:', data);
+      throw new Error('Invalid response from image function');
+    }
+
+    return data;
+  }
 }
 
 export async function generateStoryStructure(prompt, childName) {
@@ -54,11 +62,8 @@ Keep language simple, warm, and suitable for bedtime stories. Include ${childNam
 
     const content = completion.choices[0].message.content;
 
-    // Parse the JSON response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Invalid response format');
-    }
+    if (!jsonMatch) throw new Error('Invalid response format');
 
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
@@ -94,9 +99,7 @@ export async function regenerateImageWithFeedback(originalPrompt, visualStyle, f
     const result = await wavespeedGenerate(enhancedPrompt);
     const base64Image = result.data.outputs[0];
 
-    if (!base64Image) {
-      throw new Error('No image generated');
-    }
+    if (!base64Image) throw new Error('No image generated');
 
     const raw = base64Image.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
@@ -138,67 +141,7 @@ export async function regenerateTextWithFeedback(originalPrompt, childName, actT
   }
 }
 
-async function wavespeedGenerate(prompt) {
-  const maxRetries = 3;
-
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      const res = await fetch(
-        'https://api.wavespeed.ai/api/v3/wavespeed-ai/z-image/turbo',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${WAVESPEED_API_KEY}`,
-          },
-          body: JSON.stringify({
-            prompt,
-            resolution: '1k',
-            output_format: 'png',
-            enable_sync_mode: true,
-            enable_base64_output: true,
-          }),
-        },
-      );
-
-      if (res.status === 429 && attempt < maxRetries - 1) {
-        // Rate limited — wait before retrying
-        console.log(`Rate limited, retrying in ${2000 * (attempt + 1)}ms...`);
-        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-        continue;
-      }
-
-      if (!res.ok) {
-        const err = await res.text();
-        console.error('Wavespeed API error response:', err);
-        throw new Error(`Wavespeed API error: ${res.status} ${err}`);
-      }
-
-      const result = await res.json();
-      
-      // Validate response structure
-      if (!result?.data?.outputs || !Array.isArray(result.data.outputs)) {
-        console.error('Invalid Wavespeed response structure:', result);
-        throw new Error('Invalid response from image API');
-      }
-
-      return result;
-    } catch (fetchError) {
-      console.error(`Wavespeed attempt ${attempt + 1} failed:`, fetchError);
-      if (attempt === maxRetries - 1) {
-        throw fetchError;
-      }
-      // Wait before retrying
-      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-    }
-  }
-}
-
 export async function generateImage(sceneDescription, visualStyle) {
-  if (!WAVESPEED_API_KEY) {
-    throw new Error('Wavespeed API key not configured. Please set VITE_WAVESPEED_API_KEY in .env.local');
-  }
-
   const prompt = `${SAFETY_PROMPT_PREFIX}, ${visualStyle} style, ${sceneDescription}. ${NO_TEXT_INSTRUCTION}`;
 
   try {
@@ -206,18 +149,12 @@ export async function generateImage(sceneDescription, visualStyle) {
     const result = await wavespeedGenerate(prompt);
     const base64Image = result.data.outputs[0];
 
-    if (!base64Image) {
-      throw new Error('No image generated');
-    }
+    if (!base64Image) throw new Error('No image generated');
 
-    // Strip data URI prefix if present
     const raw = base64Image.replace(/^data:image\/\w+;base64,/, '');
-
-    // Convert base64 to Blob
     const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
     const blob = new Blob([buffer], { type: 'image/png' });
 
-    // Upload to InsForge storage
     const { data: uploadData, error: uploadError } = await insforge.storage
       .from('story-images')
       .uploadAuto(blob);
@@ -239,10 +176,9 @@ export async function generateFullStorybook(storybookId, userId, prompt, childNa
   const { onProgress, onPageComplete, onError } = callbacks;
 
   try {
-    // Step 1: Generate story structure
     onProgress?.('Crafting your story...');
     console.log('Starting story generation for:', childName, 'with prompt:', prompt);
-    
+
     const structure = await generateStoryStructure(prompt, childName);
     console.log('Story structure generated:', structure.title, 'with', structure.acts?.length, 'acts');
 
@@ -250,7 +186,6 @@ export async function generateFullStorybook(storybookId, userId, prompt, childNa
       throw new Error('No story acts were generated');
     }
 
-    // Step 2: Generate pages sequentially to avoid rate limits
     onProgress?.('Creating magical illustrations...');
 
     const pages = [];
@@ -258,7 +193,7 @@ export async function generateFullStorybook(storybookId, userId, prompt, childNa
       try {
         onProgress?.(`Creating page ${act.actNumber} of 4...`);
         console.log(`Generating page ${act.actNumber}: ${act.actTitle}`);
-        
+
         const imageUrl = await generateImage(act.sceneDescription, visualStyle);
 
         const page = {
@@ -286,7 +221,7 @@ export async function generateFullStorybook(storybookId, userId, prompt, childNa
         });
       }
     }
-    
+
     console.log('Storybook generation complete:', pages.length, 'pages');
     return {
       title: structure.title,
