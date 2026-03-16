@@ -100,13 +100,11 @@ export async function regenerateImageWithFeedback(originalPrompt, visualStyle, f
 
   try {
     const result = await wavespeedGenerate(enhancedPrompt);
-    const base64Image = result.outputs[0];
+    const imageData = result.outputs[0];
 
-    if (!base64Image) throw new Error('No image generated');
+    if (!imageData) throw new Error('No image generated');
 
-    const raw = base64Image.replace(/^data:image\/\w+;base64,/, '');
-    const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
-    const blob = new Blob([buffer], { type: 'image/png' });
+    const blob = await imageDataToBlob(imageData);
 
     const { data: uploadData, error: uploadError } = await insforge.storage
       .from('story-images')
@@ -144,19 +142,30 @@ export async function regenerateTextWithFeedback(originalPrompt, childName, actT
   }
 }
 
+async function imageDataToBlob(imageData) {
+  if (imageData.startsWith('http')) {
+    // CDN URL from async mode — fetch in the browser
+    const res = await fetch(imageData);
+    if (!res.ok) throw new Error(`Failed to fetch image from CDN: ${res.status}`);
+    return await res.blob();
+  }
+  // base64 data URI from sync mode
+  const raw = imageData.replace(/^data:image\/\w+;base64,/, '');
+  const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
+  return new Blob([buffer], { type: 'image/png' });
+}
+
 export async function generateImage(sceneDescription, visualStyle) {
   const prompt = `${SAFETY_PROMPT_PREFIX}, ${visualStyle} style, ${sceneDescription}. ${NO_TEXT_INSTRUCTION}`;
 
   try {
     console.log('Generating image with prompt:', prompt.substring(0, 100) + '...');
     const result = await wavespeedGenerate(prompt);
-    const base64Image = result.outputs[0];
+    const imageData = result.outputs[0];
 
-    if (!base64Image) throw new Error('No image generated');
+    if (!imageData) throw new Error('No image generated');
 
-    const raw = base64Image.replace(/^data:image\/\w+;base64,/, '');
-    const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
-    const blob = new Blob([buffer], { type: 'image/png' });
+    const blob = await imageDataToBlob(imageData);
 
     const { data: uploadData, error: uploadError } = await insforge.storage
       .from('story-images')
