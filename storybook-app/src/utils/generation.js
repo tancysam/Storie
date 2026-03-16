@@ -2,13 +2,36 @@ import { ACT_TITLES, SAFETY_PROMPT_PREFIX, NO_TEXT_INSTRUCTION } from './constan
 import insforge from '../lib/insforgeClient';
 
 async function openaiChat(messages, temperature = 0.7) {
-  const completion = await insforge.ai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages,
-    temperature,
+  const { data, error } = await insforge.functions.invoke('openai-chat', {
+    body: { messages, temperature },
   });
 
-  return completion;
+  if (error) throw new Error(`OpenAI function error: ${error.message}`);
+  return data;
+}
+
+async function wavespeedGenerate(prompt) {
+  const maxRetries = 3;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const { data, error } = await insforge.functions.invoke('wavespeed-image', {
+      body: { prompt },
+    });
+
+    if (error) {
+      console.error(`Wavespeed attempt ${attempt + 1} failed:`, error);
+      if (attempt === maxRetries - 1) throw new Error(`Wavespeed function error: ${error.message}`);
+      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      continue;
+    }
+
+    if (!data?.data?.outputs || !Array.isArray(data.data.outputs)) {
+      console.error('Invalid Wavespeed response structure:', data);
+      throw new Error('Invalid response from image function');
+    }
+
+    return data;
+  }
 }
 
 export async function generateStoryStructure(prompt, childName) {
@@ -39,11 +62,8 @@ Keep language simple, warm, and suitable for bedtime stories. Include ${childNam
 
     const content = completion.choices[0].message.content;
 
-    // Parse the JSON response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Invalid response format');
-    }
+    if (!jsonMatch) throw new Error('Invalid response format');
 
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
@@ -76,36 +96,25 @@ export async function regenerateImageWithFeedback(originalPrompt, visualStyle, f
   const enhancedPrompt = `${SAFETY_PROMPT_PREFIX}, ${visualStyle} style, ${originalPrompt}. ${NO_TEXT_INSTRUCTION} User feedback for improvement: ${feedback}`;
 
   try {
-    const result = await insforge.ai.images.generate({
-      model: 'gemini',
-      prompt: enhancedPrompt,
-    });
+    const result = await wavespeedGenerate(enhancedPrompt);
+    const base64Image = result.data.outputs[0];
 
-    const imageUrl = result.images[0]?.url;
+    if (!base64Image) throw new Error('No image generated');
 
-    if (!imageUrl) {
-      throw new Error('No image generated');
+    const raw = base64Image.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
+    const blob = new Blob([buffer], { type: 'image/png' });
+
+    const { data: uploadData, error: uploadError } = await insforge.storage
+      .from('story-images')
+      .uploadAuto(blob);
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw new Error('Failed to upload image');
     }
 
-    // If the result is a base64 data URI, upload to InsForge storage
-    if (imageUrl.startsWith('data:')) {
-      const raw = imageUrl.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
-      const blob = new Blob([buffer], { type: 'image/png' });
-
-      const { data: uploadData, error: uploadError } = await insforge.storage
-        .from('story-images')
-        .uploadAuto(blob);
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error('Failed to upload image');
-      }
-
-      return uploadData.url;
-    }
-
-    return imageUrl;
+    return uploadData.url;
   } catch (error) {
     console.error('Error regenerating image:', error);
     throw new Error('Failed to regenerate image');
@@ -132,67 +141,31 @@ export async function regenerateTextWithFeedback(originalPrompt, childName, actT
   }
 }
 
-async function generateImageViaInsforge(prompt) {
-  const maxRetries = 3;
-
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      const result = await insforge.ai.images.generate({
-        model: 'gemini',
-        prompt,
-      });
-
-      if (!result?.images || !Array.isArray(result.images)) {
-        console.error('Invalid image generation response structure:', result);
-        throw new Error('Invalid response from image API');
-      }
-
-      return result;
-    } catch (error) {
-      console.error(`Image generation attempt ${attempt + 1} failed:`, error);
-      if (attempt === maxRetries - 1) {
-        throw error;
-      }
-      // Wait before retrying
-      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-    }
-  }
-}
-
 export async function generateImage(sceneDescription, visualStyle) {
   const prompt = `${SAFETY_PROMPT_PREFIX}, ${visualStyle} style, ${sceneDescription}. ${NO_TEXT_INSTRUCTION}`;
 
   try {
     console.log('Generating image with prompt:', prompt.substring(0, 100) + '...');
-    const result = await generateImageViaInsforge(prompt);
-    const imageUrl = result.images[0]?.url;
+    const result = await wavespeedGenerate(prompt);
+    const base64Image = result.data.outputs[0];
 
-    if (!imageUrl) {
-      throw new Error('No image generated');
+    if (!base64Image) throw new Error('No image generated');
+
+    const raw = base64Image.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
+    const blob = new Blob([buffer], { type: 'image/png' });
+
+    const { data: uploadData, error: uploadError } = await insforge.storage
+      .from('story-images')
+      .uploadAuto(blob);
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw new Error('Failed to upload image to storage');
     }
 
-    // If the result is a base64 data URI, upload to InsForge storage
-    if (imageUrl.startsWith('data:')) {
-      const raw = imageUrl.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
-      const blob = new Blob([buffer], { type: 'image/png' });
-
-      const { data: uploadData, error: uploadError } = await insforge.storage
-        .from('story-images')
-        .uploadAuto(blob);
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error('Failed to upload image to storage');
-      }
-
-      console.log('Image uploaded successfully:', uploadData.url);
-      return uploadData.url;
-    }
-
-    // If the URL is already a hosted URL, return it directly
-    console.log('Image generated successfully:', imageUrl);
-    return imageUrl;
+    console.log('Image uploaded successfully:', uploadData.url);
+    return uploadData.url;
   } catch (error) {
     console.error('Error generating image:', error);
     throw new Error(`Failed to generate image: ${error.message}`);
@@ -203,7 +176,6 @@ export async function generateFullStorybook(storybookId, userId, prompt, childNa
   const { onProgress, onPageComplete, onError } = callbacks;
 
   try {
-    // Step 1: Generate story structure
     onProgress?.('Crafting your story...');
     console.log('Starting story generation for:', childName, 'with prompt:', prompt);
 
@@ -214,7 +186,6 @@ export async function generateFullStorybook(storybookId, userId, prompt, childNa
       throw new Error('No story acts were generated');
     }
 
-    // Step 2: Generate pages sequentially to avoid rate limits
     onProgress?.('Creating magical illustrations...');
 
     const pages = [];
