@@ -13,6 +13,30 @@ async function openaiChat(messages, temperature = 0.7) {
   return data;
 }
 
+async function wavespeedGenerate(prompt) {
+  const maxRetries = 3;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const { data, error } = await insforge.functions.invoke('wavespeed-image', {
+      body: { prompt },
+    });
+
+    if (error) {
+      console.error(`Wavespeed attempt ${attempt + 1} failed:`, error);
+      if (attempt === maxRetries - 1) throw new Error(`Wavespeed function error: ${error.message}`);
+      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      continue;
+    }
+
+    if (!data?.outputs || !Array.isArray(data.outputs)) {
+      console.error('Invalid Wavespeed response structure:', data);
+      throw new Error('Invalid response from image function');
+    }
+
+    return data;
+  }
+}
+
 export async function generateStoryStructure(prompt, childName) {
   const systemPrompt = `You are a children's storybook writer. Create a 4-act story structure based on the given idea. The story is for a toddler named ${childName}.
 
@@ -41,11 +65,8 @@ Keep language simple, warm, and suitable for bedtime stories. Include ${childNam
 
     const content = completion.choices[0].message.content;
 
-    // Parse the JSON response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Invalid response format');
-    }
+    if (!jsonMatch) throw new Error('Invalid response format');
 
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
@@ -81,9 +102,7 @@ export async function regenerateImageWithFeedback(originalPrompt, visualStyle, f
     const result = await wavespeedGenerate(enhancedPrompt);
     const base64Image = result.outputs[0];
 
-    if (!base64Image) {
-      throw new Error('No image generated');
-    }
+    if (!base64Image) throw new Error('No image generated');
 
     const raw = base64Image.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
@@ -125,18 +144,6 @@ export async function regenerateTextWithFeedback(originalPrompt, childName, actT
   }
 }
 
-async function wavespeedGenerate(prompt) {
-  const { data, error } = await insforge.functions.invoke('wavespeed-image', {
-    body: { prompt },
-  });
-
-  if (error) throw new Error(`Image function error: ${error.message}`);
-  if (data?.error) throw new Error(`Wavespeed error: ${data.error}`);
-  if (!data?.outputs?.length) throw new Error('No image outputs returned');
-
-  return data;
-}
-
 export async function generateImage(sceneDescription, visualStyle) {
   const prompt = `${SAFETY_PROMPT_PREFIX}, ${visualStyle} style, ${sceneDescription}. ${NO_TEXT_INSTRUCTION}`;
 
@@ -145,18 +152,12 @@ export async function generateImage(sceneDescription, visualStyle) {
     const result = await wavespeedGenerate(prompt);
     const base64Image = result.outputs[0];
 
-    if (!base64Image) {
-      throw new Error('No image generated');
-    }
+    if (!base64Image) throw new Error('No image generated');
 
-    // Strip data URI prefix if present
     const raw = base64Image.replace(/^data:image\/\w+;base64,/, '');
-
-    // Convert base64 to Blob
     const buffer = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
     const blob = new Blob([buffer], { type: 'image/png' });
 
-    // Upload to InsForge storage
     const { data: uploadData, error: uploadError } = await insforge.storage
       .from('story-images')
       .uploadAuto(blob);
@@ -178,10 +179,9 @@ export async function generateFullStorybook(storybookId, userId, prompt, childNa
   const { onProgress, onPageComplete, onError } = callbacks;
 
   try {
-    // Step 1: Generate story structure
     onProgress?.('Crafting your story...');
     console.log('Starting story generation for:', childName, 'with prompt:', prompt);
-    
+
     const structure = await generateStoryStructure(prompt, childName);
     console.log('Story structure generated:', structure.title, 'with', structure.acts?.length, 'acts');
 
@@ -189,7 +189,6 @@ export async function generateFullStorybook(storybookId, userId, prompt, childNa
       throw new Error('No story acts were generated');
     }
 
-    // Step 2: Generate pages sequentially to avoid rate limits
     onProgress?.('Creating magical illustrations...');
 
     const pages = [];
@@ -197,7 +196,7 @@ export async function generateFullStorybook(storybookId, userId, prompt, childNa
       try {
         onProgress?.(`Creating page ${act.actNumber} of 4...`);
         console.log(`Generating page ${act.actNumber}: ${act.actTitle}`);
-        
+
         const imageUrl = await generateImage(act.sceneDescription, visualStyle);
 
         const page = {
@@ -225,7 +224,7 @@ export async function generateFullStorybook(storybookId, userId, prompt, childNa
         });
       }
     }
-    
+
     console.log('Storybook generation complete:', pages.length, 'pages');
     return {
       title: structure.title,
