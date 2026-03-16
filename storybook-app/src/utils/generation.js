@@ -1,29 +1,16 @@
 import { ACT_TITLES, SAFETY_PROMPT_PREFIX, NO_TEXT_INSTRUCTION } from './constants';
 import insforge from '../lib/insforgeClient';
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-const WAVESPEED_API_KEY = import.meta.env.VITE_WAVESPEED_API_KEY;
-
 async function openaiChat(messages, temperature = 0.7) {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages,
-      temperature,
-    }),
+  const { data, error } = await insforge.functions.invoke('openai-chat', {
+    body: { messages, temperature },
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`OpenAI API error: ${res.status} ${err}`);
-  }
+  if (error) throw new Error(`Chat function error: ${error.message}`);
+  if (data?.error) throw new Error(`OpenAI error: ${data.error}`);
+  if (!data?.choices) throw new Error('Unexpected response from openai-chat function');
 
-  return res.json();
+  return data;
 }
 
 export async function generateStoryStructure(prompt, childName) {
@@ -92,7 +79,7 @@ export async function regenerateImageWithFeedback(originalPrompt, visualStyle, f
 
   try {
     const result = await wavespeedGenerate(enhancedPrompt);
-    const base64Image = result.data.outputs[0];
+    const base64Image = result.outputs[0];
 
     if (!base64Image) {
       throw new Error('No image generated');
@@ -139,72 +126,24 @@ export async function regenerateTextWithFeedback(originalPrompt, childName, actT
 }
 
 async function wavespeedGenerate(prompt) {
-  const maxRetries = 3;
+  const { data, error } = await insforge.functions.invoke('wavespeed-image', {
+    body: { prompt },
+  });
 
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      const res = await fetch(
-        'https://api.wavespeed.ai/api/v3/wavespeed-ai/z-image/turbo',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${WAVESPEED_API_KEY}`,
-          },
-          body: JSON.stringify({
-            prompt,
-            resolution: '1k',
-            output_format: 'png',
-            enable_sync_mode: true,
-            enable_base64_output: true,
-          }),
-        },
-      );
+  if (error) throw new Error(`Image function error: ${error.message}`);
+  if (data?.error) throw new Error(`Wavespeed error: ${data.error}`);
+  if (!data?.outputs?.length) throw new Error('No image outputs returned');
 
-      if (res.status === 429 && attempt < maxRetries - 1) {
-        // Rate limited — wait before retrying
-        console.log(`Rate limited, retrying in ${2000 * (attempt + 1)}ms...`);
-        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-        continue;
-      }
-
-      if (!res.ok) {
-        const err = await res.text();
-        console.error('Wavespeed API error response:', err);
-        throw new Error(`Wavespeed API error: ${res.status} ${err}`);
-      }
-
-      const result = await res.json();
-      
-      // Validate response structure
-      if (!result?.data?.outputs || !Array.isArray(result.data.outputs)) {
-        console.error('Invalid Wavespeed response structure:', result);
-        throw new Error('Invalid response from image API');
-      }
-
-      return result;
-    } catch (fetchError) {
-      console.error(`Wavespeed attempt ${attempt + 1} failed:`, fetchError);
-      if (attempt === maxRetries - 1) {
-        throw fetchError;
-      }
-      // Wait before retrying
-      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-    }
-  }
+  return data;
 }
 
 export async function generateImage(sceneDescription, visualStyle) {
-  if (!WAVESPEED_API_KEY) {
-    throw new Error('Wavespeed API key not configured. Please set VITE_WAVESPEED_API_KEY in .env.local');
-  }
-
   const prompt = `${SAFETY_PROMPT_PREFIX}, ${visualStyle} style, ${sceneDescription}. ${NO_TEXT_INSTRUCTION}`;
 
   try {
     console.log('Generating image with prompt:', prompt.substring(0, 100) + '...');
     const result = await wavespeedGenerate(prompt);
-    const base64Image = result.data.outputs[0];
+    const base64Image = result.outputs[0];
 
     if (!base64Image) {
       throw new Error('No image generated');

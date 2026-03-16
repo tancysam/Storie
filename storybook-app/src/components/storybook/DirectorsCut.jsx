@@ -105,6 +105,7 @@ export default function DirectorsCut({
             page={page}
             onRequestEdit={handleRequestEdit}
             isRegenerating={isRegenerating}
+            storybookStatus={storybook.status}
           />
         ))}
       </div>

@@ -4,7 +4,11 @@
       "Bash(npm run:*)",
       "mcp__insforge__run-raw-sql",
       "WebSearch",
-      "WebFetch(domain:wavespeed.ai)"
+      "WebFetch(domain:wavespeed.ai)",
+      "mcp__insforge__fetch-docs",
+      "mcp__insforge__get-backend-metadata",
+      "mcp__insforge__update-function",
+      "mcp__insforge__fetch-sdk-docs"
     ]
   },
   "enabledMcpjsonServers": [

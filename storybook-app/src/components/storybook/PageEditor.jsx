@@ -2,10 +2,11 @@ import { useState } from 'react';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
 
-export default function PageEditor({ 
-  page, 
+export default function PageEditor({
+  page,
   onRequestEdit,
-  isRegenerating 
+  isRegenerating,
+  storybookStatus,
 }) {
   const [showModal, setShowModal] = useState(false);
   const [issueType, setIssueType] = useState('image');
@@ -32,6 +33,11 @@ export default function PageEditor({
               alt={`Page ${page.page_number}`}
               className="w-full h-full object-cover"
             />
+          ) : storybookStatus === 'ready' ? (
+            <div className="w-full h-full flex flex-col items-center justify-center text-retro-brown gap-2">
+              <span className="text-2xl">⚠</span>
+              <span className="text-xs font-retro">Image failed</span>
+            </div>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <LoadingSpinner size="lg" />
